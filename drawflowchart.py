@@ -13,7 +13,6 @@ file_structure = {
 # Create a graph
 graph = pgv.AGraph(directed=True)
 
-
 # Set node attributes
 node_attrs = {
     "shape": "rectangle",
@@ -24,6 +23,7 @@ node_attrs = {
 # Recursive function to add nodes and edges
 def add_nodes_and_edges(file, dependencies):
     graph.add_node(file, **node_attrs)
+
     if isinstance(dependencies, dict):
         for dependency, sub_dependencies in dependencies.items():
             graph.add_node(dependency, **node_attrs)
@@ -38,10 +38,18 @@ def add_nodes_and_edges(file, dependencies):
 for file, dependencies in file_structure.items():
     add_nodes_and_edges(file, dependencies)
 
+# Create a new graph with reversed nodes
+reversed_graph = pgv.AGraph(directed=True)
+for node in reversed(graph.nodes()):
+    reversed_graph.add_node(node, **node_attrs)
+
+# Add edges to the reversed graph
+for edge in graph.edges():
+    reversed_graph.add_edge(edge[0], edge[1])
+
 # Set graph attributes
-graph.graph_attr.update(rankdir="TB", ranksep="0.5", nodesep="0.5")
+reversed_graph.graph_attr.update(rankdir="LR", ranksep="0.5", nodesep="0.5")
 
 # Set layout and save the graph as an image
-graph.layout(prog="dot")
-#graph.layout(prog="nop")#, args="-Nshape=box -Efontsize=8"
-graph.draw("flow_diagram.png")
+reversed_graph.layout(prog="dot")
+reversed_graph.draw("flow_diagram.png")
