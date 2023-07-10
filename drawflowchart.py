@@ -11,44 +11,11 @@ import json
 #     "File2.py": [],
 #     "File3.py": ["FileD.py"]
 # }
-file_structure={
-	"onic\\ROM\\toolsupport\\jenkinsfile": {
-		"onall\\toolsupport\\keil\\provision_cmsis_packs.bat": {
-			"onall\\toolsupport\\keil\\activate_virtual_env.bat": {
-				"onall\\toolsupport\\keil\\make_virtual_env.bat": {
-					"onall\\toolsupport\\python\\run_python3.bat": [],
-					"onall\\toolsupport\\keil\\keil-ini-tool.py": []
-				}
-			}
-		},
-		"onic\\ROM\\toolsupport\\start_build_coverity.bat": {
-			"onall\\toolsupport\\python\\project-env-tool.bat": {
-				"onall\\toolsupport\\python\\run_python3.bat": [],
-				"onall\\toolsupport\\python\\project-env-tool.py": []
-			},
-			"onic\\ROM\\ROM.mmf": [],
-			"onall\\toolsupport\\coverity\\build_with_coverity.bat": [],
-			"onic\\ROM\\toolsupport\\start_build.bat": {
-				"onic\\ROM\\toolsupport\\project_env.bat": [],
-				"onic\\ROM\\toolsupport\\\\pack\\make_rom_pack.bat": {
-					"onic\\ROM\\toolsupport\\python\\rom-pack-builder.py": []
-				},
-				"onic\\ROM\\toolsupport\\Keil\\buildImages.bat": [],
-				"onic\\ROM\\toolsupport\\\\pack\\make_sec_pack.bat": {
-					"onic\\ROM\\toolsupport\\python\\rom-pack-builder.py": []
-				},
-				"onic\\ROM\\toolsupport\\\\pack\\make_ns_pack.bat": {
-					"onic\\ROM\\toolsupport\\python\\rom-pack-builder.py": []
-				},
-				"onhost\\testrunner-framework\\onhost\\TestRunner\\toolsupport\\start_build.bat": []
-			}
-		}
-	}
-}
+file_structure=None
 
 # Load JSON structure from file
-#with open('file_structure.json', 'r') as file:
-#    file_structure = json.load(file)
+with open('file_structure.json', 'r') as file:
+    file_structure = json.load(file)
 
 # Replace backslashes
 def replace_backslashes(dictionary):
