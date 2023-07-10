@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import subprocess
 
 def initLogFile(log_file, jenkinsfile):
     with open(log_file, "a") as f:
@@ -160,3 +161,6 @@ print(json_data)
 # Or save it to a file
 with open("file_structure.json", "w") as json_file:
     json_file.write(json.dumps(json_data))
+
+# Call drawflowchart.py to draw this diagram
+subprocess.run(["python", "drawflowchart.py"])
