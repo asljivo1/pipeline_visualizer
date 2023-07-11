@@ -9,9 +9,15 @@ import sys
 log_file = "missing_files.txt"
 completeJson = "file_structure.json"
 groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom\onic\ROM\toolsupport\jenkinsfile"
-pathDelimiter = "\\"
+used_file = "used_scripts.txt"
 # ==============================================
 
+pathDelimiter = "\\" if os.name == 'nt' else "/"
+
+with open(used_file, "w") as f:
+    f.write("===========================================================\n")
+    f.write(f"All scripts used in '{groovy_file_path}' or its children:" + "\n")
+    f.write("===========================================================\n") 
 
 def extractRepoNameFromPath(path):
     pattern = r"aa.*?---.*?---.*?[\\\/]"
@@ -36,6 +42,19 @@ def initLogFile(log_file, jenkinsfile):
             f.write("===========================================================\n")
             f.write(f"Missing files in tree with root '{jenkinsfile}':" + "\n")
             f.write("===========================================================\n")
+
+def appendFilepath(path):
+    # Check if already exists
+    append = False
+    with open(used_file, 'r') as file:
+        content = file.read()
+        if path not in content:
+            append = True
+    
+    # Log shortened file path to a txt file if it already isn't added
+    if append:
+        with open(used_file, "a") as f:
+            f.write(path + "\n")
 
 def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pathDelimiter, reponame):
     # Check if the file_path exists before trying to open it
@@ -77,7 +96,7 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pat
 
             json_rootfile = file_path.split(reponame, 1)[-1]
             json_path = path.split(reponame, 1)[-1]
-            
+
             json_to_compare = None
             # Check if parent_json_array is empty
             if not parent_json_array:
@@ -96,20 +115,24 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pat
                 if not parent_json_array:
                     if json[json_rootfile] == []:
                         json[json_rootfile] = {json_path : []}
+                        appendFilepath(json_path)
                 else:
                     current_json = json
                     for key in parent_json_array:
                         current_json = current_json[key]
                         if json_rootfile in current_json and current_json[json_rootfile] == []:
                             current_json[json_rootfile] = {json_path : []}
+                            appendFilepath(json_path)                          
                         elif json_rootfile in current_json and not current_json[json_rootfile] == []:
                             current_json[json_rootfile] += "," + {json_path : []}
+                            appendFilepath(json_path)                         
                         if current_json is None:
                             break
             else:
                 # Not only item, append to existing
                 temp_obj = json_to_compare[json_rootfile]
                 temp_obj[json_path] = []
+                appendFilepath(json_path)             
 
             #print("--------------------JSON------------------")
             #print(json)
