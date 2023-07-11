@@ -2,6 +2,34 @@ import os
 import json
 import re
 import subprocess
+import sys
+
+# POPULATE VARIABLES 
+# ==============================================
+log_file = "missing_files.txt"
+completeJson = "file_structure.json"
+groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom\onic\ROM\toolsupport\jenkinsfile"
+pathDelimiter = "\\"
+# ==============================================
+
+
+def extractRepoNameFromPath(path):
+    pattern = r"aa.*?---.*?---.*?[\\\/]"
+    match = re.search(pattern, path)
+    if match:
+        extracted_value = match.group()
+        # Need to cut off the last character "\" or "/" matched by regex
+        reponame = extracted_value[:-1] + pathDelimiter
+        return reponame
+    else:
+        print(f"path={path} does not contain Git repository with a name adhering to NXP convention (aa-sca---X---Y)")
+        sys.exit(1)
+
+reponame = extractRepoNameFromPath(groovy_file_path)
+# Extract Git repository name from groovy_file_path (e.g. "C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom")
+substring_start = groovy_file_path.index(reponame)
+substring_end = groovy_file_path.index(pathDelimiter, substring_start)
+root_repository_local_path = groovy_file_path[:substring_end]
 
 def initLogFile(log_file, jenkinsfile):
     with open(log_file, "w") as f:
@@ -9,7 +37,7 @@ def initLogFile(log_file, jenkinsfile):
             f.write(f"Missing files in tree with root '{jenkinsfile}':" + "\n")
             f.write("===========================================================\n")
 
-def find_file_paths(file_path, root_path, json, parent_json_array, log_file):
+def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pathDelimiter, reponame):
     # Check if the file_path exists before trying to open it
     if not os.path.exists(file_path):
         with open(log_file, "a") as f:
@@ -22,7 +50,7 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file):
         # Search for file paths with extensions '.bat', '.py' and '.mmf'
         paths = re.findall(r'[\'"]([^\'"\s]*\.(bat|py|mmf))', content)
 
-        paths = [path[0].replace('/', '\\') for path in paths]
+        paths = [path[0].replace('/', pathDelimiter) for path in paths]
 
         # Process each found file path
         for path in paths:
@@ -36,18 +64,17 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file):
                     N = path.count('..')
 
                     # Remove part of the string from last Nth backslash until the end
-                    path_parts = root_path.split('\\')
-                    new_root_path = '\\'.join(path_parts[:-N]) if N > 0 else root_path
+                    path_parts = root_path.split(pathDelimiter)
+                    new_root_path = pathDelimiter.join(path_parts[:-N]) if N > 0 else root_path
 
-                    path_parts = path.split('\\')
-                    new_path = '\\'.join(path_parts[N:]) if N > 0 else path
+                    path_parts = path.split(pathDelimiter)
+                    new_path = pathDelimiter.join(path_parts[N:]) if N > 0 else path
 
                     # Concatenate the new path with the root path
                     path = os.path.join(new_root_path, new_path)
                 else:
-                    path = root_path + '\\' + path
+                    path = root_path + pathDelimiter + path
 
-            reponame = "aa-sca---uwb-sw---rom\\"
             json_rootfile = file_path.split(reponame, 1)[-1]
             json_path = path.split(reponame, 1)[-1]
             
@@ -88,33 +115,27 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file):
             #print(json)
             #print("---------------------------------------")
 
-            last_backslash_index = path.rfind('\\')
+            last_backslash_index = path.rfind(pathDelimiter)
             new_root = path[:last_backslash_index]
 
             # Recursively search for file paths in referenced files
             sub_parent_json_array = parent_json_array.copy()
             sub_parent_json_array.append(json_rootfile)
-            find_file_paths(path, new_root, json, sub_parent_json_array, log_file)
+            find_file_paths(path, new_root, json, sub_parent_json_array, log_file, pathDelimiter, reponame)
 
-# Specify the repository path and Jenkinsfile path on local machine
-#TODO update root_repository_local_path and groovy_file_path
-root_repository_local_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom"
-groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom\onic\ROM\toolsupport\jenkinsfile"
 
-log_file = "missing_files.txt"
 initLogFile(log_file, groovy_file_path)
 
 # Find file paths recursively starting from groovy_file_path and considering repository cloned to root_repository_local_path
-reponame = "aa-sca---uwb-sw---rom\\" #TODO
 groovy_filepath_json = groovy_file_path.split(reponame, 1)[-1]
 json_data = {
     groovy_filepath_json : []
 }
 parent_json_array = []
-file_paths = find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file)
+file_paths = find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
 
 # Save json to a file
-with open("file_structure.json", "w") as json_file:
+with open(completeJson, "w") as json_file:
     json_file.write(json.dumps(json_data))
 
 # Call drawflowchart.py to draw this diagram
