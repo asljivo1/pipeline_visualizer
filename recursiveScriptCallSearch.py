@@ -163,6 +163,9 @@ def is_jenkinsfile(file_path):
     stages_pattern = re.compile(r'\bstages\s*\{')
     stage_pattern = re.compile(r'\bstage\b\s*\(\s*["\'].*["\']\s*\)')
 
+    # Split the content based on the stage_pattern
+    stage_contents = re.split(stage_pattern, content)[1:]
+
     # Count the occurrences of the keywords
     pipeline_count = len(re.findall(pipeline_pattern, content))
     agent_count = len(re.findall(agent_pattern, content))
@@ -171,9 +174,9 @@ def is_jenkinsfile(file_path):
 
     # Check if the file is a Jenkinsfile based on the criteria
     if pipeline_count == 1 and agent_count >= 0 and stages_count >= 0 and stage_count >= 0:
-        return True
+        return stage_contents
     else:
-        return False
+        return None
 
 
 initLogFile(log_file, groovy_file_path)
@@ -192,8 +195,12 @@ if not os.path.exists(groovy_file_path):
         f.write(groovy_file_path + "\n")
     exit
 
-if is_jenkinsfile(groovy_file_path):
+stages = is_jenkinsfile(groovy_file_path)
+if stages:
     # Iterate through stages and populate separate json_data for each stage
+    for stage_str in stages:
+        print(f"+++This is a stage content:\n{stage_str}")
+
     #find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
     print (">>>  IT IS JENKISFILE !")
 else:
