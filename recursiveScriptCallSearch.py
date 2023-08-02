@@ -8,7 +8,8 @@ import sys
 # ==============================================
 log_file = "missing_files.txt"
 completeJson = "file_structure.json"
-groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom\onic\ROM\toolsupport\jenkinsfile"
+#groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\ROM-repo\aa-sca---uwb-sw---rom\onic\ROM\toolsupport\jenkinsfile"
+groovy_file_path = r"C:\Users\aseferagic\OneDrive - ENDAVA\Work\NXP Ranger5 July 2023\aa-sca---uwb-sw---sbe\onall\toolsupport\jenkins\jenkinsfile"
 used_file = "used_scripts.txt"
 # ==============================================
 
@@ -146,6 +147,34 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pat
             sub_parent_json_array.append(json_rootfile)
             find_file_paths(path, new_root, json, sub_parent_json_array, log_file, pathDelimiter, reponame)
 
+# Check if this file is a Jenkinsfile
+# Jenkinsfile contains exactly one "pipeline" keyword, any number of "agent" and "stages" followed by "{", and any number of "stage" keyword followed by "(<string>)"
+def is_jenkinsfile(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return False
+
+    # Define the regex patterns
+    pipeline_pattern = re.compile(r'\bpipeline\s*\{')
+    agent_pattern = re.compile(r'\bagent\b')
+    stages_pattern = re.compile(r'\bstages\s*\{')
+    stage_pattern = re.compile(r'\bstage\b\s*\(\s*["\'].*["\']\s*\)')
+
+    # Count the occurrences of the keywords
+    pipeline_count = len(re.findall(pipeline_pattern, content))
+    agent_count = len(re.findall(agent_pattern, content))
+    stages_count = len(re.findall(stages_pattern, content))
+    stage_count = len(re.findall(stage_pattern, content))
+
+    # Check if the file is a Jenkinsfile based on the criteria
+    if pipeline_count == 1 and agent_count >= 0 and stages_count >= 0 and stage_count >= 0:
+        return True
+    else:
+        return False
+
 
 initLogFile(log_file, groovy_file_path)
 
@@ -155,11 +184,24 @@ json_data = {
     groovy_filepath_json : []
 }
 parent_json_array = []
-file_paths = find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
 
-# Save json to a file
-with open(completeJson, "w") as json_file:
-    json_file.write(json.dumps(json_data))
 
-# Call drawflowchart.py to draw this diagram
-subprocess.run(["python", "drawflowchart.py"])
+# Check if the file_path exists before trying to open it
+if not os.path.exists(groovy_file_path):
+    with open(log_file, "a") as f:
+        f.write(groovy_file_path + "\n")
+    exit
+
+if is_jenkinsfile(groovy_file_path):
+    # Iterate through stages and populate separate json_data for each stage
+    #find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
+    print (">>>  IT IS JENKISFILE !")
+else:
+    find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
+
+    # Save json to a file
+    with open(completeJson, "w") as json_file:
+        json_file.write(json.dumps(json_data))
+
+    # Call drawflowchart.py to draw this diagram
+    subprocess.run(["python", "drawflowchart.py"])
