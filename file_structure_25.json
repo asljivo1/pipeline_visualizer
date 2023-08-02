@@ -1,9 +1,0 @@
-{
-    "onall/toolsupport/jenkins/jenkinsfile": {
-        "onall/release/package/make_frs_package.bat": {
-            "onall/toolsupport/python/run_python3.bat": [],
-            "onall/toolsupport/python/sbe-pack-builder.py": [],
-            "onall/toolsupport/python/sbe-frs-header.py": []
-        }
-    }
-}

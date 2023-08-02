@@ -1,5 +1,3 @@
-flow_diagram.png
-file_structure.json
-file_structure_updated.json
-missing_files.txt
-used_scripts.txt
+*.png
+*.json
+*.txt
