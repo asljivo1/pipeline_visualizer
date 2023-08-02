@@ -1,0 +1,20 @@
+{
+    "onall/toolsupport/jenkins/jenkinsfile": {
+        "onic/toolsupport/start_build_testing.bat": {
+            "onhost/testrunner-framework/onic/toolsupport/start_build.bat": [],
+            "onall/toolsupport/keil/keil-build-images.bat": [],
+            "onic/toolsupport/generate_flash_background_test.bat": {
+                "onic/toolsupport/create_swup_combined_image.bat": {
+                    "onall/toolsupport/python/run_python3.bat": [],
+                    "onic/toolsupport/python/mem-background-builder.py": []
+                },
+                "onall/toolsupport/python/run_python3.bat": [],
+                "onic/toolsupport/python/mem-background-builder.py": []
+            }
+        },
+        "onall/release/package/make_testenv_package.bat": {
+            "onall/toolsupport/python/run_python3.bat": [],
+            "onall/toolsupport/python/sbe-pack-builder.py": []
+        }
+    }
+}

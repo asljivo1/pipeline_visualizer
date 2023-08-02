@@ -1,6 +1,13 @@
 import pygraphviz as pgv
 import json
+import sys
+import re
 
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+    print("Received filename:", filename)
+else:
+    print("No filename provided.")
 # file_structure = {
 #     "File1.py": {
 #         "FileA.py": {
@@ -14,7 +21,7 @@ import json
 file_structure=None
 
 # Load JSON structure from file
-with open('file_structure.json', 'r') as file:
+with open(filename, 'r') as file:
     file_structure = json.load(file)
 
 # Replace backslashes
@@ -33,7 +40,7 @@ def replace_backslashes(dictionary):
 file_structure = replace_backslashes(file_structure)
 
 # Save updated JSON structure back to file
-with open('file_structure_updated.json', 'w') as file:
+with open(filename, 'w') as file:
     json.dump(file_structure, file, indent=4)
 
 # Create a graph
@@ -78,4 +85,16 @@ reversed_graph.graph_attr.update(rankdir="LR", ranksep="0.5", nodesep="0.5")
 
 # Set layout and save the graph as an image
 reversed_graph.layout(prog="dot")
-reversed_graph.draw("flow_diagram.png")
+
+png_filename = None
+pattern = r"file_structure_(\d+)\.json"
+match = re.search(pattern, filename)
+if match:
+    # Extract the number from the matched group
+    counter_number = int(match.group(1))
+    png_filename = f"flow_diagram_{counter_number}.png"
+else:
+    print("No counter number found in the filename.")
+    png_filename = f"flow_diagram_0000.png"
+
+reversed_graph.draw(png_filename)

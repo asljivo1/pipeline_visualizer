@@ -1,0 +1,8 @@
+{
+    "onall/toolsupport/jenkins/jenkinsfile": {
+        "onic/toolsupport/generate_flash_background.bat": {
+            "onall/toolsupport/python/run_python3.bat": [],
+            "onic/toolsupport/python/mem-background-builder.py": []
+        }
+    }
+}

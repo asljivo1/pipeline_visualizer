@@ -57,7 +57,7 @@ def appendFilepath(path):
         with open(used_file, "a") as f:
             f.write(path + "\n")
 
-def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pathDelimiter, reponame):
+def find_file_paths_from_path(file_path, root_path, json, parent_json_array, log_file, pathDelimiter, reponame):
     # Check if the file_path exists before trying to open it
     if not os.path.exists(file_path):
         with open(log_file, "a") as f:
@@ -68,7 +68,7 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pat
         content = file.read()
 
         # Search for file paths with extensions '.bat', '.py' and '.mmf'
-        paths = re.findall(r'[\'"]([^\'"\s]*\.(bat|py|mmf))', content)
+        paths = re.findall(r'[\'"]([^\'"\s]*\.(bat|py))', content)
 
         paths = [path[0].replace('/', pathDelimiter) for path in paths]
 
@@ -145,7 +145,88 @@ def find_file_paths(file_path, root_path, json, parent_json_array, log_file, pat
             # Recursively search for file paths in referenced files
             sub_parent_json_array = parent_json_array.copy()
             sub_parent_json_array.append(json_rootfile)
-            find_file_paths(path, new_root, json, sub_parent_json_array, log_file, pathDelimiter, reponame)
+            find_file_paths_from_path(path, new_root, json, sub_parent_json_array, log_file, pathDelimiter, reponame)
+
+def find_file_paths_in_string(content, file_path, root_path, json, parent_json_array, log_file, pathDelimiter, reponame):
+    # Search for file paths with extensions '.bat', '.py' and '.mmf'
+    paths = re.findall(r'[\'"]([^\'"\s]*\.(bat|py))', content)
+
+    paths = [path[0].replace('/', pathDelimiter) for path in paths]
+
+    # Process each found file path
+    for path in paths:
+        # Remove '%~dp0' from the beginning of the string if present
+        if path.startswith("%~dp0"):
+            path = path.replace("%~dp0", "", 1)
+
+        if path.find(root_path) == -1:
+            if path.count('..') > 0:
+                # Count occurrences of '..' in the path
+                N = path.count('..')
+
+                # Remove part of the string from last Nth backslash until the end
+                path_parts = root_path.split(pathDelimiter)
+                new_root_path = pathDelimiter.join(path_parts[:-N]) if N > 0 else root_path
+
+                path_parts = path.split(pathDelimiter)
+                new_path = pathDelimiter.join(path_parts[N:]) if N > 0 else path
+
+                # Concatenate the new path with the root path
+                path = os.path.join(new_root_path, new_path)
+            else:
+                path = root_path + pathDelimiter + path
+
+        json_rootfile = file_path.split(reponame, 1)[-1]
+        json_path = path.split(reponame, 1)[-1]
+
+        json_to_compare = None
+        # Check if parent_json_array is empty
+        if not parent_json_array:
+            json_to_compare = json
+        else:
+            # Traverse the parent_json_array and access the nested JSON values
+            current_json = json
+            for key in parent_json_array:
+                current_json = current_json.get(key)
+                if current_json is None:
+                    break
+            json_to_compare = current_json
+
+        if json_rootfile in json_to_compare and json_to_compare[json_rootfile] == []:
+            # Traverse the parent_json_array and access the nested JSON values
+            if not parent_json_array:
+                if json[json_rootfile] == []:
+                    json[json_rootfile] = {json_path : []}
+                    appendFilepath(json_path)
+            else:
+                current_json = json
+                for key in parent_json_array:
+                    current_json = current_json[key]
+                    if json_rootfile in current_json and current_json[json_rootfile] == []:
+                        current_json[json_rootfile] = {json_path : []}
+                        appendFilepath(json_path)                          
+                    elif json_rootfile in current_json and not current_json[json_rootfile] == []:
+                        current_json[json_rootfile] += "," + {json_path : []}
+                        appendFilepath(json_path)                         
+                    if current_json is None:
+                        break
+        else:
+            # Not only item, append to existing
+            temp_obj = json_to_compare[json_rootfile]
+            temp_obj[json_path] = []
+            appendFilepath(json_path)             
+
+        #print("--------------------JSON------------------")
+        #print(json)
+        #print("---------------------------------------")
+
+        last_backslash_index = path.rfind(pathDelimiter)
+        new_root = path[:last_backslash_index]
+
+        # Recursively search for file paths in referenced files
+        sub_parent_json_array = parent_json_array.copy()
+        sub_parent_json_array.append(json_rootfile)
+        find_file_paths_from_path(path, new_root, json, sub_parent_json_array, log_file, pathDelimiter, reponame)
 
 # Check if this file is a Jenkinsfile
 # Jenkinsfile contains exactly one "pipeline" keyword, any number of "agent" and "stages" followed by "{", and any number of "stage" keyword followed by "(<string>)"
@@ -196,15 +277,28 @@ if not os.path.exists(groovy_file_path):
     exit
 
 stages = is_jenkinsfile(groovy_file_path)
+counter = 0
 if stages:
     # Iterate through stages and populate separate json_data for each stage
     for stage_str in stages:
-        print(f"+++This is a stage content:\n{stage_str}")
+        counter += 1
+        stage_json = json_data.copy()
+        #stage_parent_json_array = parent_json_array.copy()
+        find_file_paths_in_string(stage_str, groovy_file_path, root_repository_local_path, stage_json, parent_json_array, log_file, pathDelimiter, reponame)
+        
+        # Save json to a file
+        new_filename = f"file_structure_{counter}.json"
+        with open(new_filename, "w") as json_file:
+            json_file.write(json.dumps(stage_json))
 
-    #find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
-    print (">>>  IT IS JENKISFILE !")
+        # Call drawflowchart.py to draw this diagram
+        try:
+            # Run the other script as a subprocess and pass the filename as an argument
+            subprocess.run(["python", "drawflowchart.py", new_filename], check=True)
+        except subprocess.CalledProcessError as e:
+            print("Error executing the subprocess:", e)
 else:
-    find_file_paths(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
+    find_file_paths_from_path(groovy_file_path, root_repository_local_path, json_data, parent_json_array, log_file, pathDelimiter, reponame)
 
     # Save json to a file
     with open(completeJson, "w") as json_file:

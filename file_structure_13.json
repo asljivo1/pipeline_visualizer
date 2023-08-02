@@ -1,0 +1,6 @@
+{
+    "onall/toolsupport/jenkins/jenkinsfile": {
+        "onall/toolsupport/coverity/analyze.bat": [],
+        "onall/toolsupport/coverity/commit.bat": []
+    }
+}

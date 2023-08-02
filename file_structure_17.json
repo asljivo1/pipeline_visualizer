@@ -1,0 +1,18 @@
+{
+    "onall/toolsupport/jenkins/jenkinsfile": {
+        "onic/Variant/toolsupport/start_check.bat": {
+            "onall/toolsupport/python/sbe-keil-inspect.bat": {
+                "onall/toolsupport/python/run_python3.bat": [],
+                "onall/toolsupport/python/sbe-keil-inspect.py": []
+            },
+            "onall/toolsupport/python/project-env-tool.bat": {
+                "onall/toolsupport/python/run_python3.bat": [],
+                "onall/toolsupport/python/project-env-tool.py": []
+            },
+            "onall/toolsupport/cloc/run_cloc.bat": [],
+            "onall/toolsupport/qmore/run_qmore.bat": {
+                "onall/toolsupport/qmore//filter.py": []
+            }
+        }
+    }
+}
