@@ -87,12 +87,13 @@ reversed_graph.graph_attr.update(rankdir="LR", ranksep="0.5", nodesep="0.5")
 reversed_graph.layout(prog="dot")
 
 png_filename = None
-pattern = r"file_structure_(\d+)\.json"
+#pattern = r"file_structure_(\d+)\.json"
+pattern = r'file_structure_(.*?)\.json'
 match = re.search(pattern, filename)
 if match:
     # Extract the number from the matched group
-    counter_number = int(match.group(1))
-    png_filename = f"flow_diagram_{counter_number}.png"
+    stage_name = match.group(1)
+    png_filename = f"flow_diagram_{stage_name}.png"
 else:
     print("No counter number found in the filename.")
     png_filename = f"flow_diagram_0000.png"
